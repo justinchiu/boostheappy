@@ -40,6 +40,7 @@ struct MyPQ {
     }
     void pop() { pq.pop(); }
     const Data& top() { return pq.top().data; }
+    const int& topCount() { return pq.top().count; }
     void update(int first, int second, int count) {
         Handle h = map[std::make_pair(first, second)];
         //pq.update(h, count);
@@ -67,6 +68,9 @@ struct MyPQ {
     bool has(int first, int second) {
         return map.find(std::make_pair(first, second)) != map.end();
     }
+    const int& lookup(int first, int second) {
+        return (*map[std::make_pair(first, second)]).count;
+    }
     PQ pq;
     LUT map;
 };
@@ -84,6 +88,7 @@ PYBIND11_MODULE(heappy, m) {
         .def("decrement", &MyPQ::decrement)
         .def("add",       &MyPQ::add)
         .def("sub",       &MyPQ::sub)
-        .def("has",       &MyPQ::has);
+        .def("has",       &MyPQ::has)
+        .def("lookup",    &MyPQ::lookup);
 }
 
