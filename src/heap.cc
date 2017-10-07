@@ -83,6 +83,7 @@ PYBIND11_MODULE(heappy, m) {
         .def("erase",     &MyPQ::erase)
         .def("pop",       &MyPQ::pop)
         .def("top",       &MyPQ::top)
+        .def("topCount",  &MyPQ::topCount)
         .def("update",    &MyPQ::update)
         .def("increment", &MyPQ::increment)
         .def("decrement", &MyPQ::decrement)
