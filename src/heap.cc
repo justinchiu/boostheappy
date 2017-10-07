@@ -10,8 +10,8 @@ namespace py = pybind11;
 struct heap_data;
 using Data = std::pair<int, int>;
 using PQ = boost::heap::binomial_heap<heap_data>;
-using LUT = std::unordered_map<Data, PQ::handle_type, boost::hash<std::pair<int, int>>>;
 using Handle = PQ::handle_type;
+using LUT = std::unordered_map<Data, Handle, boost::hash<std::pair<int, int>>>;
 
 struct heap_data {
     Handle handle;
@@ -28,6 +28,9 @@ struct heap_data {
 
 struct MyPQ {
     MyPQ() : pq(), map() {}
+    bool has(int first, int second) {
+        return map.find(std::make_pair(first, second)) != map.end();
+    }
     void push(int first, int second, int count) { 
         Handle h = pq.push(heap_data(first, second, count)); 
         map.insert(std::make_pair(std::make_pair(first, second), h));
@@ -38,7 +41,7 @@ struct MyPQ {
         pq.erase(h);
         map.erase(p);
     }
-    void pop() { pq.pop(); }
+    void pop() { map.erase(pq.top().data); pq.pop(); }
     const Data& top() { return pq.top().data; }
     const int& topCount() { return pq.top().count; }
     void update(int first, int second, int count) {
@@ -46,27 +49,52 @@ struct MyPQ {
         //pq.update(h, count);
     }
     void increment(int first, int second) {
-        Handle h = map[std::make_pair(first, second)];
-        ++(*h).count;
-        pq.increase(h);
+        auto it = map.find(std::make_pair(first, second));
+        if (it == map.end()) {
+            push(first, second, 1);
+        } else {
+            Handle h = it->second;
+            ++(*h).count;
+            pq.increase(h);
+        }
     }
     void decrement(int first, int second) {
-        Handle h = map[std::make_pair(first, second)];
-        --(*h).count;
-        pq.decrease(h);
+        auto it = map.find(std::make_pair(first, second));
+        if (it == map.end()) {
+        } else {
+            Handle h = it->second;
+            --(*h).count;
+            if ((*h).count <= 0) {
+                map.erase((*h).data);
+                pq.erase(h);
+            } else {
+                pq.decrease(h);
+            }
+        }
     }
     void add(int first, int second, int count) {
-        Handle h = map[std::make_pair(first, second)];
-        (*h).count += count;
-        pq.increase(h);
+        auto it = map.find(std::make_pair(first, second));
+        if (it == map.end()) {
+            push(first, second, count);
+        } else {
+            Handle h = it->second;
+            (*h).count += count;
+            pq.increase(h);
+        }
     }
     void sub(int first, int second, int count) {
-        Handle h = map[std::make_pair(first, second)];
-        (*h).count -= count;
-        pq.decrease(h);
-    }
-    bool has(int first, int second) {
-        return map.find(std::make_pair(first, second)) != map.end();
+        auto it = map.find(std::make_pair(first, second));
+        if (it == map.end()) {
+        } else {
+            Handle h = it->second;
+            (*h).count -= count;
+            if ((*h).count <= 0) {
+                map.erase((*h).data);
+                pq.erase(h);
+            } else {
+                pq.decrease(h);
+            }
+        }
     }
     const int& lookup(int first, int second) {
         return (*map[std::make_pair(first, second)]).count;
